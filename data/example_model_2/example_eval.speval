@@ -1,0 +1,8 @@
+{
+  "dataset": "PASCAL07",
+  "dataset_split": "test",
+  "model": "model.ckpt-12345",
+  "results": {
+    "mAP": 0.62660000
+  }
+}

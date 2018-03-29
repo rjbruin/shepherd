@@ -1,0 +1,10 @@
+{
+  "name": "example_model_1",
+  "dataset": "PASCAL07",
+  "learning_rate": 0.0035,
+  "optimizer": "Adam",
+  "some_flag": true,
+  "models": [
+    "model.ckpt-10000"
+  ]
+}
