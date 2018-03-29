@@ -1,0 +1,6 @@
+# Development files
+/data*
+.spconfig
+
+# Python generated files
+__pycache__/
