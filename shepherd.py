@@ -225,7 +225,6 @@ def settings_route():
 
 @app.route("/")
 def overview_route():
-    print(CONFIG['views'])
     return view(CONFIG, 'overview')
 
 @app.route("/views/<string:viewname>")
