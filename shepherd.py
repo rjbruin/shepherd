@@ -1,6 +1,6 @@
 import os
 import re
-from flask import Flask, render_template
+from flask import Flask, render_template, request, redirect
 import json
 
 
@@ -11,12 +11,18 @@ app = Flask(__name__)
 # ============================================================================ #
 
 CONFIG_FILE = ".spconfig"
-DEFAULT_CONFIG = {
-    'model_home': './data',
+VIEW_TEMPLATE = {
     'train_order': ['name', 'dataset'],
     'train_ignore': [],
     'eval_order': [],
     'eval_ignore': []
+}
+DEFAULT_CONFIG = {
+    'model_home': './data',
+    'views_order': ['overview'],
+    'views': {
+        'overview': VIEW_TEMPLATE.copy()
+    }
 }
 CONFIG = None
 DATA = {
@@ -28,6 +34,7 @@ DATA = {
 def initialize():
     """Initialize configurations."""
     global CONFIG
+    global DATA
     # Create config if it doesn't exist
     if not os.path.exists(CONFIG_FILE):
         with open(CONFIG_FILE, 'w') as f:
@@ -36,6 +43,22 @@ def initialize():
     # Load configuration
     with open(CONFIG_FILE, 'r') as f:
         CONFIG = json.load(f)
+
+    DATA = get_data()
+
+def get_data():
+    # Update DATA with menu links
+    view_names = sorted(list(CONFIG['views'].keys()))
+    DATA['views'] = view_names
+    DATA['views_order'] = CONFIG['views_order']
+    return DATA.copy()
+
+# TODO
+# @app.after_request
+def save_config():
+    global CONFIG
+    with open(CONFIG_FILE, 'w') as f:
+        json.dump(CONFIG, f)
 
 # ============================================================================ #
 # Model logic
@@ -160,31 +183,69 @@ def order_evaluations(models):
         ordered_models.append(model)
     return ordered_models
 
+def view(config, view):
+    # Discover models
+    view_config = config['views'][view]
+    models = discover_models(config['model_home'])
+    train_keys = train_columns(models, view_config['train_order'], view_config['train_ignore'])
+    eval_metrics = eval_columns(models, view_config['eval_order'], view_config['eval_ignore'])
+
+    # Render
+    data = {
+        'header': view.capitalize(),
+        'active_page': view,
+        'models': models,
+        'train_columns': train_keys,
+        'eval_metrics': eval_metrics
+    }
+    data.update(get_data())
+    return render_template('view.html', data=data)
+
+def create_view(viewname):
+    global CONFIG
+    CONFIG['views'][viewname] = VIEW_TEMPLATE.copy()
+    CONFIG['views_order'].append(viewname)
+    save_config()
+
+def not_found():
+    return render_template('not_found.html', data=DATA)
+
 # ============================================================================ #
 # Routing
 # ============================================================================ #
 
 @app.route("/settings")
-def settings():
+def settings_route():
     data =  {
-        'config': CONFIG
+        'config': CONFIG,
+        'active_page': 'settings'
     }
-    data.update(DATA.copy())
+    data.update(get_data())
     return render_template('settings.html', data=data)
 
 @app.route("/")
-def overview():
-    # Discover models
-    models = discover_models(CONFIG['model_home'])
-    train_keys = train_columns(models, CONFIG['train_order'], CONFIG['train_ignore'])
-    eval_metrics = eval_columns(models, CONFIG['eval_order'], CONFIG['eval_ignore'])
+def overview_route():
+    print(CONFIG['views'])
+    return view(CONFIG, 'overview')
 
-    # Render
+@app.route("/views/<string:viewname>")
+def view_route(viewname):
+    if viewname in CONFIG['views']:
+        return view(CONFIG, viewname)
+    else:
+        return not_found()
+
+@app.route("/create_view")
+def view_new_route():
     data = {
-        'header': 'Overview',
-        'models': models,
-        'train_columns': train_keys,
-        'eval_metrics': eval_metrics
+        'active_page': 'create_new'
     }
-    data.update(DATA.copy())
-    return render_template('overview.html', data=data)
+    data.update(get_data())
+    return render_template('create_view.html', data=data)
+
+@app.route("/views", methods=['POST'])
+def view_new_submit_route():
+    viewname = request.form['view_name']
+    create_view(viewname)
+    # return view_route(viewname)
+    return redirect('/views/{}'.format(viewname))
