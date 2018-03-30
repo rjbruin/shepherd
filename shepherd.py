@@ -12,7 +12,11 @@ app = Flask(__name__)
 
 CONFIG_FILE = ".spconfig"
 DEFAULT_CONFIG = {
-    'model_home': './data'
+    'model_home': './data',
+    'train_order': ['name', 'dataset'],
+    'train_ignore': [],
+    'eval_order': [],
+    'eval_ignore': []
 }
 CONFIG = None
 DATA = {
@@ -95,7 +99,6 @@ def discover_models(model_home):
         with open(os.path.join(path, train_paths[0]), 'r') as f:
             model = json.load(f)
         model['evaluations'] = []
-        print(eval_paths)
         for eval_path in eval_paths:
             with open(eval_path, 'r') as f:
                 model['evaluations'].append(json.load(f))
@@ -103,6 +106,59 @@ def discover_models(model_home):
         models_with_evals.append(model)
 
     return models_with_evals
+
+def train_columns(models, order=[], ignore=[]):
+    # Get set of all keys in models
+    keys = set()
+    for model in models:
+        model_keys = list(model.keys())
+        model_keys.remove('evaluations')
+        keys.update(model_keys)
+    all_keys = list(keys)
+
+    # Insert new keys after given order
+    ordered_keys = []
+    for key in order:
+        all_keys.remove(key)
+        ordered_keys.append(key)
+    ordered_keys += sorted(all_keys)
+
+    # Remove keys to ignore
+    for key in ignore:
+        ordered_keys.remove(key)
+
+    return ordered_keys
+
+def eval_columns(models, order=[], ignore=[]):
+    # Get set of all metrics in models
+    metrics = set()
+    for model in models:
+        print(model)
+        for eval in model['evaluations']:
+            metrics.update(set(eval['results'].keys()))
+    all_metrics = list(metrics)
+
+    # Insert new metrics after given order
+    ordered_keys = []
+    for key in order:
+        all_metrics.remove(key)
+        ordered_keys.append(key)
+    ordered_keys += sorted(all_metrics)
+
+    # Remove metrics to ignore
+    for key in ignore:
+        ordered_keys.remove(key)
+
+    return ordered_keys
+
+def order_evaluations(models):
+    # Order evaluations by sorting
+    ordered_models = []
+    for model in models:
+        evals = sorted(model['evaluations'], key=lambda e: e['model'])
+        model['evaluations'] = evals
+        ordered_models.append(model)
+    return ordered_models
 
 # ============================================================================ #
 # Routing
@@ -113,17 +169,22 @@ def settings():
     data =  {
         'config': CONFIG
     }
-    print(CONFIG)
     data.update(DATA.copy())
     return render_template('settings.html', data=data)
 
 @app.route("/")
 def overview():
+    # Discover models
     models = discover_models(CONFIG['model_home'])
+    train_keys = train_columns(models, CONFIG['train_order'], CONFIG['train_ignore'])
+    eval_metrics = eval_columns(models, CONFIG['eval_order'], CONFIG['eval_ignore'])
+
+    # Render
     data = {
         'header': 'Overview',
-        'models': models
+        'models': models,
+        'train_columns': train_keys,
+        'eval_metrics': eval_metrics
     }
     data.update(DATA.copy())
-    # TODO(rjbruin): Render models in overview
     return render_template('overview.html', data=data)
