@@ -10,23 +10,25 @@
           var flash_danger = "<div class='alert alert-danger' role='alert'></div>";
 
           $("#view_delete").click( function() {
-            $.ajax('/views/{{ data.viewname }}', {
-              method: 'DELETE',
-              data: {viewname: "{{ data.viewname }}"},
-              success: function() {
-                var alert = $(flash_success);
-                alert.append("View deleted. Redirecting to homepage...");
-                $("#flashes").append(alert);
-                setTimeout(function() {
-                  window.location.href = "/";
-                }, 3000);
-              },
-              error: function() {
-                var alert = $(flash_error);
-                alert.append("View could not be deleted!");
-                $("#flashes").append(alert);
-              }
-            })
+            if (confirm("Delete this view?")) {
+              $.ajax('/views/{{ data.viewname }}', {
+                method: 'DELETE',
+                data: {viewname: "{{ data.viewname }}"},
+                success: function() {
+                  var alert = $(flash_success);
+                  alert.append("View deleted. Redirecting to homepage...");
+                  $("#flashes").append(alert);
+                  setTimeout(function() {
+                    window.location.href = "/";
+                  }, 3000);
+                },
+                error: function() {
+                  var alert = $(flash_error);
+                  alert.append("View could not be deleted!");
+                  $("#flashes").append(alert);
+                }
+              });
+            }
           });
         });
         </script>
