@@ -198,7 +198,8 @@ def view(config, view):
         'active_page': view,
         'models': models,
         'train_columns': train_keys,
-        'eval_metrics': eval_metrics
+        'eval_metrics': eval_metrics,
+        'show_delete': True if view != 'overview' else False
     }
     data.update(get_data())
     return render_template('view.html', data=data)
@@ -210,10 +211,16 @@ def create_view(viewname):
     save_config()
 
 def delete_view(viewname):
+    if viewname is 'overview':
+        return False
     global CONFIG
-    del CONFIG['views'][viewname]
-    CONFIG['views_order'].remove(viewname)
-    save_config()
+    try:
+        del CONFIG['views'][viewname]
+        CONFIG['views_order'].remove(viewname)
+        save_config()
+    except Exception:
+        return False
+    return True
 
 def not_found():
     return render_template('not_found.html', data=DATA)
@@ -247,6 +254,8 @@ def overview_route():
 
 @app.route("/views/<string:viewname>")
 def view_route(viewname):
+    if viewname == 'overview':
+        return overview_route()
     if viewname in CONFIG['views']:
         return view(CONFIG, viewname)
     else:
