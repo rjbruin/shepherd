@@ -28,3 +28,13 @@
         </ul>
       </div>
     </nav>
+
+    {% with messages = get_flashed_messages(with_categories=True) %}
+      <div class='container' id='flashes'>
+        {% for cat, message in messages %}
+        <div class="alert alert-{{ cat }}" role="alert">
+          {{ message }}
+        </div>
+        {% endfor %}
+      </div>
+    {% endwith %}

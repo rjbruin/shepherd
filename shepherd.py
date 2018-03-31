@@ -1,10 +1,11 @@
 import os
 import re
-from flask import Flask, render_template, request, redirect
+from flask import Flask, render_template, request, redirect, flash, jsonify
 import json
 
 
 app = Flask(__name__)
+app.secret_key = 'Marte Fleur is lief!'
 
 # ============================================================================ #
 # App configuration defaults
@@ -193,6 +194,7 @@ def view(config, view):
     # Render
     data = {
         'header': view.capitalize(),
+        'viewname': view,
         'active_page': view,
         'models': models,
         'train_columns': train_keys,
@@ -207,8 +209,24 @@ def create_view(viewname):
     CONFIG['views_order'].append(viewname)
     save_config()
 
+def delete_view(viewname):
+    global CONFIG
+    del CONFIG['views'][viewname]
+    CONFIG['views_order'].remove(viewname)
+    save_config()
+
 def not_found():
     return render_template('not_found.html', data=DATA)
+
+# ============================================================================ #
+# AJAX Routing
+# ============================================================================ #
+
+@app.route("/views/<string:viewname>", methods=['DELETE'])
+def view_delete_ajax_route(viewname):
+    viewname = request.form['viewname']
+    delete_view(viewname)
+    return jsonify({'success': True, 'viewname': viewname})
 
 # ============================================================================ #
 # Routing
@@ -246,5 +264,5 @@ def view_new_route():
 def view_new_submit_route():
     viewname = request.form['view_name']
     create_view(viewname)
-    # return view_route(viewname)
+    flash("View created!", 'success')
     return redirect('/views/{}'.format(viewname))
