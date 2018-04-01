@@ -54,8 +54,6 @@ def get_data():
     DATA['views_order'] = CONFIG['views_order']
     return DATA.copy()
 
-# TODO
-# @app.after_request
 def save_config():
     global CONFIG
     with open(CONFIG_FILE, 'w') as f:
@@ -146,18 +144,20 @@ def train_columns(models, order=[], ignore=[]):
         all_keys.remove(key)
         ordered_keys.append(key)
     ordered_keys += sorted(all_keys)
+    # Add state to variables
+    state_keys = zip(ordered_keys, [True] * len(ordered_keys))
 
-    # Remove keys to ignore
+    # Set ignored keys state to disabled
     for key in ignore:
-        ordered_keys.remove(key)
+        index = ordered_keys.index(key)
+        state_keys[index] = (state_keys[index][0], False)
 
-    return ordered_keys
+    return list(state_keys)
 
 def eval_columns(models, order=[], ignore=[]):
     # Get set of all metrics in models
     metrics = set()
     for model in models:
-        print(model)
         for eval in model['evaluations']:
             metrics.update(set(eval['results'].keys()))
     all_metrics = list(metrics)
