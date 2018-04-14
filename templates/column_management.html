@@ -30,6 +30,9 @@
 
 <script>
 $(document).ready(function() {
+  var flash_success = "<div class='alert alert-success' role='alert'></div>";
+  var flash_danger = "<div class='alert alert-danger' role='alert'></div>";
+
   // Changing state of list items when (de)selected
   $("#columnsForm .list-group-item>input").click(function() {
     // $(this).parent().toggleClass('disabled');
@@ -42,10 +45,43 @@ $(document).ready(function() {
   // Save column settings
   $("#saveColumns").click(function() {
     $(this).addClass('disabled');
-    $(this).text("Saving...")
-    // TODO: get new ordering through $("#columnsList li").data('column') and .attr('checked')
-    // TODO: $.ajax(...)
-    // TODO: close modal
+    $(this).text("Saving...");
+    // Get new ordering through $("#columnsList li").data('column') and .attr('checked')
+    var train_columns = new Array();
+    var train_states = new Array();
+    $("#columnsList li").each( function() {
+        var name = $(this).data('column');
+        train_columns.push(name);
+        var state = $(this).find("input").prop('checked');
+        train_states.push(state);
+    });
+
+    // Update configuration for columns
+    // TODO: eval columns
+    data = {
+        train_columns: train_columns,
+        train_states: train_states,
+        eval_columns: [],
+        eval_states: []
+    };
+    $.ajax('/views/{{ data.viewname }}/columns', {
+        method: 'POST',
+        data: JSON.stringify(data, null, '\t'),
+        contentType: 'application/json;charset=UTF-8',
+        success: function(data) {
+            var alert = $(flash_success);
+            alert.append(data.msg);
+            $("#flashes").append(alert);
+        }, error: function(data) {
+            var alert = $(flash_danger);
+            alert.append("Something went wrong!");
+            $("#flashes").append(alert);
+        }
+    });
+
+    // Close modal
+    $("#columnManagement").modal('hide');
+
     // TODO: use toggleColumn() to update display
   });
 });

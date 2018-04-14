@@ -13,10 +13,8 @@ app.secret_key = 'Marte Fleur is lief!'
 
 CONFIG_FILE = ".spconfig"
 VIEW_TEMPLATE = {
-    'train_order': ['name', 'dataset'],
-    'train_ignore': [],
-    'eval_order': [],
-    'eval_ignore': []
+    'train_columns': [('name', True), ('dataset', True)],
+    'eval_columns': [],
 }
 DEFAULT_CONFIG = {
     'model_home': './data',
@@ -129,51 +127,35 @@ def discover_models(model_home):
 
     return models_with_evals
 
-def train_columns(models, order=[], ignore=[]):
+def _add_enabled_columns(order, columns):
+    # Insert new keys after given order, sorted by name
+    for key, state in order:
+        columns.remove(key)
+    columns = list(zip(columns, [True] * len(columns)))
+    order += sorted(columns, key=lambda c: c[0])
+
+    return order
+
+def train_columns(models, order=[]):
     # Get set of all keys in models
     keys = set()
     for model in models:
         model_keys = list(model.keys())
         model_keys.remove('evaluations')
         keys.update(model_keys)
-    all_keys = list(keys)
+    model_keys = list(keys)
 
-    # Insert new keys after given order
-    ordered_keys = []
-    for key in order:
-        all_keys.remove(key)
-        ordered_keys.append(key)
-    ordered_keys += sorted(all_keys)
-    # Add state to variables
-    state_keys = zip(ordered_keys, [True] * len(ordered_keys))
+    return list(_add_enabled_columns(list(order), model_keys))
 
-    # Set ignored keys state to disabled
-    for key in ignore:
-        index = ordered_keys.index(key)
-        state_keys[index] = (state_keys[index][0], False)
-
-    return list(state_keys)
-
-def eval_columns(models, order=[], ignore=[]):
+def eval_columns(models, order=[]):
     # Get set of all metrics in models
     metrics = set()
     for model in models:
         for eval in model['evaluations']:
             metrics.update(set(eval['results'].keys()))
-    all_metrics = list(metrics)
+    model_metrics = list(metrics)
 
-    # Insert new metrics after given order
-    ordered_keys = []
-    for key in order:
-        all_metrics.remove(key)
-        ordered_keys.append(key)
-    ordered_keys += sorted(all_metrics)
-
-    # Remove metrics to ignore
-    for key in ignore:
-        ordered_keys.remove(key)
-
-    return ordered_keys
+    return list(_add_enabled_columns(list(order), model_metrics))
 
 def order_evaluations(models):
     # Order evaluations by sorting
@@ -188,8 +170,8 @@ def view(config, view):
     # Discover models
     view_config = config['views'][view]
     models = discover_models(config['model_home'])
-    train_keys = train_columns(models, view_config['train_order'], view_config['train_ignore'])
-    eval_metrics = eval_columns(models, view_config['eval_order'], view_config['eval_ignore'])
+    train_keys = train_columns(models, view_config['train_columns'])
+    eval_metrics = eval_columns(models, view_config['eval_columns'])
 
     # Render
     data = {
@@ -212,15 +194,27 @@ def create_view(viewname):
 
 def delete_view(viewname):
     if viewname is 'overview':
-        return False
+        return False, "Overview cannot be deleted."
     global CONFIG
     try:
         del CONFIG['views'][viewname]
         CONFIG['views_order'].remove(viewname)
         save_config()
     except Exception:
-        return False
-    return True
+        return False, "Something went wrong! Please contact an administrator."
+    return True, "View deleted. Redirecting to homepage..."
+
+def update_columns(viewname, train_columns, train_states, eval_columns, eval_states):
+    global CONFIG
+    if viewname not in CONFIG['views']:
+        return False, "View does not exist!"
+
+    train_order = list(zip(train_columns, train_states))
+    CONFIG['views'][viewname]['train_columns'] = train_order
+    eval_order = list(zip(eval_columns, eval_states))
+    CONFIG['views'][viewname]['eval_columns'] = eval_order
+
+    return True, "View updated."
 
 def not_found():
     return render_template('not_found.html', data=DATA)
@@ -229,11 +223,23 @@ def not_found():
 # AJAX Routing
 # ============================================================================ #
 
+def _json_response_with_msg(succes_and_msg):
+    success, msg = succes_and_msg
+    return jsonify({'success': success, 'msg': msg})
+
 @app.route("/views/<string:viewname>", methods=['DELETE'])
 def view_delete_ajax_route(viewname):
-    viewname = request.form['viewname']
-    delete_view(viewname)
-    return jsonify({'success': True, 'viewname': viewname})
+    return _json_response_with_msg(delete_view(viewname))
+
+@app.route("/views/<string:viewname>/columns", methods=['POST'])
+def view_update_columns(viewname):
+    train_columns = request.json['train_columns']
+    train_states = request.json['train_states']
+    eval_columns = request.json['eval_columns']
+    eval_states = request.json['eval_states']
+    return _json_response_with_msg(update_columns(
+        viewname, train_columns, train_states, eval_columns, eval_states
+    ))
 
 # ============================================================================ #
 # Routing

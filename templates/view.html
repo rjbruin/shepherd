@@ -13,10 +13,9 @@
             if (confirm("Delete this view?")) {
               $.ajax('/views/{{ data.viewname }}', {
                 method: 'DELETE',
-                data: {viewname: "{{ data.viewname }}"},
-                success: function() {
+                success: function(data) {
                   var alert = $(flash_success);
-                  alert.append("View deleted. Redirecting to homepage...");
+                  alert.append(data.msg);
                   $("#flashes").append(alert);
                   setTimeout(function() {
                     window.location.href = "/";

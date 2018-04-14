@@ -6,11 +6,11 @@
   <thead class='thead-light'>
     <tr>
       {% for column, state in data.train_columns %}
-        <th data-key="{{ column }}">{{ column }}</th>
+        <th data-key="{{ column }}" data-state="{{ state }}">{{ column }}</th>
       {% endfor %}
-      <th data-key="eval_models"></th>
-      {% for metric in data.eval_metrics %}
-        <th data-key="{{ metric }}">{{ metric }}
+      <th data-key="eval_models" class="view-eval-head">Evaluations</th>
+      {% for metric, state in data.eval_metrics %}
+        <th data-key="{{ metric }}" data-state="{{ state }}" class="view-eval-head">{{ metric }}
       {% endfor %}
     </tr>
   </thead>
@@ -18,15 +18,15 @@
     {% for model in data.models %}
     <tr>
       {% for column, state in data.train_columns %}
-      <td data-key="{{ column }}">{{ model[column] }}</td>
+      <td data-key="{{ column }}" data-state="{{ state }}">{{ model[column] }}</td>
       {% endfor %}
       <td data-key="eval_models">
         {% for eval in model.evaluations %}
           @ {{ eval['model'] }}<br />
         {% endfor %}
       </td>
-      {% for metric in data.eval_metrics %}
-        <td data-key="{{ metric }}">
+      {% for metric, state in data.eval_metrics %}
+        <td data-key="{{ metric }}" data-state="{{ state }}">
           {% for eval in model.evaluations %}
             {{ eval['results'][metric] }}<br />
           {% endfor %}
