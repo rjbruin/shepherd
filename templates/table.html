@@ -8,11 +8,11 @@
   <thead class='thead-light'>
     <tr>
       {% for column, state in data.train_columns %}
-        <th data-key="{{ column }}" data-state="{{ state }}">{{ column }}</th>
+        <th data-key="{{ column }}" data-state="{{ state | int }}">{{ column }}</th>
       {% endfor %}
       <th data-key="eval_models" class="view-eval-head">Evaluations</th>
       {% for metric, state in data.eval_columns %}
-        <th data-key="{{ metric }}" data-state="{{ state }}" class="view-eval-head">{{ metric }}
+        <th data-key="{{ metric }}" data-state="{{ state | int }}" class="view-eval-head">{{ metric }}
       {% endfor %}
     </tr>
   </thead>
@@ -20,7 +20,7 @@
     {% for model in data.models %}
     <tr>
       {% for column, state in data.train_columns %}
-      <td data-key="{{ column }}" data-state="{{ state }}">{{ model[column] }}</td>
+      <td data-key="{{ column }}" data-state="{{ state | int }}">{{ model[column] }}</td>
       {% endfor %}
       <td data-key="eval_models">
         {% for eval in model.evaluations %}
@@ -28,7 +28,7 @@
         {% endfor %}
       </td>
       {% for metric, state in data.eval_columns %}
-        <td data-key="{{ metric }}" data-state="{{ state }}">
+        <td data-key="{{ metric }}" data-state="{{ state | int }}">
           {% for eval in model.evaluations %}
             {{ eval['results'][metric] }}<br />
           {% endfor %}
@@ -38,11 +38,3 @@
     {% endfor %}
   </tbody>
 </table>
-
-<script>
-$(document).ready(function() {
-    toggleColumn = function(key) {
-        $("table.shepherd-view [data-key='" + key + "']").toggle();
-    }
-});
-</script>

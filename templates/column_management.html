@@ -100,7 +100,13 @@ $(document).ready(function() {
     // Close modal
     $("#columnManagement").modal('hide');
 
-    // TODO: use toggleColumn() to update display
+    // Update display
+    var columns = train_columns.concat(eval_columns)
+    var states = train_states.concat(eval_states)
+    for (var i = 0; i < columns.length; i++) {
+        $("table.shepherd-view [data-key=" + columns[i] + "]").attr('data-state', states[i] ? 1 : 0)
+        // TODO: Fix Bool vs. bool
+    }
   });
 });
 </script>
