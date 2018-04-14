@@ -1,4 +1,6 @@
-{% with columns = data.train_columns %}
+{% with %}
+    {% set train_columns = data.train_columns %}
+    {% set eval_columns = data.eval_columns %}
     {% include 'column_management.html' %}
 {% endwith %}
 
@@ -9,7 +11,7 @@
         <th data-key="{{ column }}" data-state="{{ state }}">{{ column }}</th>
       {% endfor %}
       <th data-key="eval_models" class="view-eval-head">Evaluations</th>
-      {% for metric, state in data.eval_metrics %}
+      {% for metric, state in data.eval_columns %}
         <th data-key="{{ metric }}" data-state="{{ state }}" class="view-eval-head">{{ metric }}
       {% endfor %}
     </tr>
@@ -25,7 +27,7 @@
           @ {{ eval['model'] }}<br />
         {% endfor %}
       </td>
-      {% for metric, state in data.eval_metrics %}
+      {% for metric, state in data.eval_columns %}
         <td data-key="{{ metric }}" data-state="{{ state }}">
           {% for eval in model.evaluations %}
             {{ eval['results'][metric] }}<br />

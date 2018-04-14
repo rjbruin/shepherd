@@ -10,8 +10,18 @@
       <form id='columnsForm'>
           <div class="modal-body">
               <p>Select columns to display. Reorder columns by dragging.</p>
-              <ul id="columnsList" class="list-group">
-                {% for column, state in columns %}
+              <h1>Training columns</h1>
+              <ul id="trainColumnsList" class="columnsList list-group">
+                {% for column, state in train_columns %}
+                  <li class="list-group-item {% if not state %}list-group-item-secondary{% endif %}" draggable="True" data-column="{{ column }}">
+                    <input type="checkbox" id="{{ column }}Check" {% if state %}checked{% endif %} />
+                    <label class="form-check-label" for="{{ column }}Check">{{ column }}</label>
+                  </li>
+                {% endfor %}
+              </ul>
+              <h1>Evaluation columns</h1>
+              <ul id="evalColumnsList" class="columnsList list-group">
+                {% for column, state in eval_columns %}
                   <li class="list-group-item {% if not state %}list-group-item-secondary{% endif %}" draggable="True" data-column="{{ column }}">
                     <input type="checkbox" id="{{ column }}Check" {% if state %}checked{% endif %} />
                     <label class="form-check-label" for="{{ column }}Check">{{ column }}</label>
@@ -40,29 +50,37 @@ $(document).ready(function() {
   });
 
   // Allow for reordering columns through drag-and-drop using jQuery UI
-  $("#columnsList").sortable();
+  $(".columnsList").sortable();
 
   // Save column settings
   $("#saveColumns").click(function() {
     $(this).addClass('disabled');
     $(this).text("Saving...");
-    // Get new ordering through $("#columnsList li").data('column') and .attr('checked')
+    // Get new ordering
     var train_columns = new Array();
     var train_states = new Array();
-    $("#columnsList li").each( function() {
+    $("#trainColumnsList li").each( function() {
         var name = $(this).data('column');
         train_columns.push(name);
         var state = $(this).find("input").prop('checked');
         train_states.push(state);
     });
+    // Get new ordering for eval
+    var eval_columns = new Array();
+    var eval_states = new Array();
+    $("#evalColumnsList li").each( function() {
+        var name = $(this).data('column');
+        eval_columns.push(name);
+        var state = $(this).find("input").prop('checked');
+        eval_states.push(state);
+    });
 
-    // Update configuration for columns
-    // TODO: eval columns
+    // Update configuration for train and eval columns
     data = {
         train_columns: train_columns,
         train_states: train_states,
-        eval_columns: [],
-        eval_states: []
+        eval_columns: eval_columns,
+        eval_states: eval_states
     };
     $.ajax('/views/{{ data.viewname }}/columns', {
         method: 'POST',

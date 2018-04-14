@@ -136,7 +136,7 @@ def _add_enabled_columns(order, columns):
 
     return order
 
-def train_columns(models, order=[]):
+def gather_train_columns(models, order=[]):
     # Get set of all keys in models
     keys = set()
     for model in models:
@@ -147,7 +147,7 @@ def train_columns(models, order=[]):
 
     return list(_add_enabled_columns(list(order), model_keys))
 
-def eval_columns(models, order=[]):
+def gather_eval_columns(models, order=[]):
     # Get set of all metrics in models
     metrics = set()
     for model in models:
@@ -170,8 +170,8 @@ def view(config, view):
     # Discover models
     view_config = config['views'][view]
     models = discover_models(config['model_home'])
-    train_keys = train_columns(models, view_config['train_columns'])
-    eval_metrics = eval_columns(models, view_config['eval_columns'])
+    train_columns = gather_train_columns(models, view_config['train_columns'])
+    eval_columns = gather_eval_columns(models, view_config['eval_columns'])
 
     # Render
     data = {
@@ -179,8 +179,8 @@ def view(config, view):
         'viewname': view,
         'active_page': view,
         'models': models,
-        'train_columns': train_keys,
-        'eval_metrics': eval_metrics,
+        'train_columns': train_columns,
+        'eval_columns': eval_columns,
         'show_delete': True if view != 'overview' else False
     }
     data.update(get_data())
@@ -213,6 +213,7 @@ def update_columns(viewname, train_columns, train_states, eval_columns, eval_sta
     CONFIG['views'][viewname]['train_columns'] = train_order
     eval_order = list(zip(eval_columns, eval_states))
     CONFIG['views'][viewname]['eval_columns'] = eval_order
+    save_config()
 
     return True, "View updated."
 
