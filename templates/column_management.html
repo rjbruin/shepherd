@@ -90,6 +90,10 @@ $(document).ready(function() {
             var alert = $(flash_success);
             alert.append(data.msg);
             $("#flashes").append(alert);
+
+            // Refresh page
+            // TODO: Re-render view with new ordering and states
+            window.location.href = "/views/{{ data.viewname }}";
         }, error: function(data) {
             var alert = $(flash_danger);
             alert.append("Something went wrong!");
@@ -99,10 +103,6 @@ $(document).ready(function() {
 
     // Close modal
     $("#columnManagement").modal('hide');
-
-    // Refresh page
-    // TODO: Re-render view with new ordering and states
-    window.location.href = "/views/{{ data.viewname }}";
   });
 });
 </script>

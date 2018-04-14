@@ -3,59 +3,14 @@ import re
 from flask import Flask, render_template, request, redirect, flash, jsonify
 import json
 
-
 app = Flask(__name__)
 app.secret_key = 'Marte Fleur is lief!'
 
-# ============================================================================ #
-# App configuration defaults
-# ============================================================================ #
+import app_logic.api as api
+import app_logic.config as config
 
-CONFIG_FILE = ".spconfig"
-VIEW_TEMPLATE = {
-    'train_columns': [('name', True), ('dataset', True)],
-    'eval_columns': [],
-}
-DEFAULT_CONFIG = {
-    'model_home': './data',
-    'views_order': ['overview'],
-    'views': {
-        'overview': VIEW_TEMPLATE.copy()
-    }
-}
-CONFIG = None
-DATA = {
-    'title': 'Shepherd 0.0'
-}
-
-
-@app.before_first_request
-def initialize():
-    """Initialize configurations."""
-    global CONFIG
-    global DATA
-    # Create config if it doesn't exist
-    if not os.path.exists(CONFIG_FILE):
-        with open(CONFIG_FILE, 'w') as f:
-            json.dump(DEFAULT_CONFIG, f)
-
-    # Load configuration
-    with open(CONFIG_FILE, 'r') as f:
-        CONFIG = json.load(f)
-
-    DATA = get_data()
-
-def get_data():
-    # Update DATA with menu links
-    view_names = sorted(list(CONFIG['views'].keys()))
-    DATA['views'] = view_names
-    DATA['views_order'] = CONFIG['views_order']
-    return DATA.copy()
-
-def save_config():
-    global CONFIG
-    with open(CONFIG_FILE, 'w') as f:
-        json.dump(CONFIG, f)
+CONFIG = config.Configuration()
+print(CONFIG.configuration)
 
 # ============================================================================ #
 # Model logic
@@ -166,10 +121,10 @@ def order_evaluations(models):
         ordered_models.append(model)
     return ordered_models
 
-def view(config, view):
+def view(view):
     # Discover models
-    view_config = config['views'][view]
-    models = discover_models(config['model_home'])
+    view_config = CONFIG.get('views')[view]
+    models = discover_models(CONFIG.get('model_home'))
     train_columns = gather_train_columns(models, view_config['train_columns'])
     eval_columns = gather_eval_columns(models, view_config['eval_columns'])
 
@@ -183,42 +138,11 @@ def view(config, view):
         'eval_columns': eval_columns,
         'show_delete': True if view != 'overview' else False
     }
-    data.update(get_data())
+    data.update(CONFIG.get_headers())
     return render_template('view.html', data=data)
 
-def create_view(viewname):
-    global CONFIG
-    CONFIG['views'][viewname] = VIEW_TEMPLATE.copy()
-    CONFIG['views_order'].append(viewname)
-    save_config()
-
-def delete_view(viewname):
-    if viewname is 'overview':
-        return False, "Overview cannot be deleted."
-    global CONFIG
-    try:
-        del CONFIG['views'][viewname]
-        CONFIG['views_order'].remove(viewname)
-        save_config()
-    except Exception:
-        return False, "Something went wrong! Please contact an administrator."
-    return True, "View deleted. Redirecting to homepage..."
-
-def update_columns(viewname, train_columns, train_states, eval_columns, eval_states):
-    global CONFIG
-    if viewname not in CONFIG['views']:
-        return False, "View does not exist!"
-
-    train_order = list(zip(train_columns, train_states))
-    CONFIG['views'][viewname]['train_columns'] = train_order
-    eval_order = list(zip(eval_columns, eval_states))
-    CONFIG['views'][viewname]['eval_columns'] = eval_order
-    save_config()
-
-    return True, "View updated."
-
 def not_found():
-    return render_template('not_found.html', data=DATA)
+    return render_template('not_found.html', data=CONFIG.get_headers())
 
 # ============================================================================ #
 # AJAX Routing
@@ -230,7 +154,7 @@ def _json_response_with_msg(succes_and_msg):
 
 @app.route("/views/<string:viewname>", methods=['DELETE'])
 def view_delete_ajax_route(viewname):
-    return _json_response_with_msg(delete_view(viewname))
+    return _json_response_with_msg(api.delete_view(viewname))
 
 @app.route("/views/<string:viewname>/columns", methods=['POST'])
 def view_update_columns(viewname):
@@ -238,7 +162,7 @@ def view_update_columns(viewname):
     train_states = request.json['train_states']
     eval_columns = request.json['eval_columns']
     eval_states = request.json['eval_states']
-    return _json_response_with_msg(update_columns(
+    return _json_response_with_msg(api.update_columns(
         viewname, train_columns, train_states, eval_columns, eval_states
     ))
 
@@ -249,36 +173,40 @@ def view_update_columns(viewname):
 @app.route("/settings")
 def settings_route():
     data =  {
-        'config': CONFIG,
+        'config': CONFIG.get_all(),
         'active_page': 'settings'
     }
-    data.update(get_data())
+    data.update(CONFIG.get_headers())
     return render_template('settings.html', data=data)
 
 @app.route("/")
 def overview_route():
-    return view(CONFIG, 'overview')
+    return view('overview')
 
 @app.route("/views/<string:viewname>")
 def view_route(viewname):
     if viewname == 'overview':
         return overview_route()
-    if viewname in CONFIG['views']:
-        return view(CONFIG, viewname)
+    if viewname in CONFIG.get('views'):
+        return view(viewname)
     else:
         return not_found()
 
-@app.route("/create_view")
+@app.route("/views/new", methods=['GET'])
 def view_new_route():
     data = {
         'active_page': 'create_new'
     }
-    data.update(get_data())
+    data.update(CONFIG.get_headers())
     return render_template('create_view.html', data=data)
 
 @app.route("/views", methods=['POST'])
 def view_new_submit_route():
     viewname = request.form['view_name']
-    create_view(viewname)
-    flash("View created!", 'success')
-    return redirect('/views/{}'.format(viewname))
+    success, msg = api.create_view(viewname, CONFIG.get('view_template'))
+    if success:
+        flash(msg, 'success')
+        return redirect('/views/{}'.format(viewname))
+    else:
+        flash(msg, 'danger')
+        return redirect('/views/new')
