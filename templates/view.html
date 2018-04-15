@@ -2,40 +2,42 @@
 <div class='container' id='content'>
   <div class='row'>
     <div class='col-xs-12'>
-      {% if data.show_delete %}
-        <button class='btn btn-default float-right' id='view_delete'>Delete view</button>
-        <script>
-        $(document).ready( function() {
-          var flash_success = "<div class='alert alert-success' role='alert'></div>";
-          var flash_danger = "<div class='alert alert-danger' role='alert'></div>";
+      <div class="btn-group float-right" role="group" aria-label="Basic example">
+          {% if data.show_delete %}
+            <button class='btn btn-default' id='view_delete'>Delete view</button>
+            <script>
+            $(document).ready( function() {
+              var flash_success = "<div class='alert alert-success' role='alert'></div>";
+              var flash_danger = "<div class='alert alert-danger' role='alert'></div>";
 
-          $("#view_delete").click( function() {
-            if (confirm("Delete this view?")) {
-              $.ajax('/views/{{ data.viewname }}', {
-                method: 'DELETE',
-                success: function(data) {
-                  var alert = $(flash_success);
-                  alert.append(data.msg);
-                  $("#flashes").append(alert);
-                  setTimeout(function() {
-                    window.location.href = "/";
-                  }, 3000);
-                },
-                error: function() {
-                  var alert = $(flash_error);
-                  alert.append("View could not be deleted!");
-                  $("#flashes").append(alert);
+              $("#view_delete").click( function() {
+                if (confirm("Delete this view?")) {
+                  $.ajax('/views/{{ data.viewname }}', {
+                    method: 'DELETE',
+                    success: function(data) {
+                      var alert = $(flash_success);
+                      alert.append(data.msg);
+                      $("#flashes").append(alert);
+                      setTimeout(function() {
+                        window.location.href = "/";
+                      }, 3000);
+                    },
+                    error: function() {
+                      var alert = $(flash_error);
+                      alert.append("View could not be deleted!");
+                      $("#flashes").append(alert);
+                    }
+                  });
                 }
               });
-            }
-          });
-        });
-        </script>
-      {% endif %}
-      <button type="button" class="btn btn-default float-right" data-toggle="modal" data-target="#columnManagement">
-        Change columns in view
-      </button>
-      <h1>{{ data.header }}</h1>
+            });
+            </script>
+          {% endif %}
+          <button type="button" class="btn btn-default" data-toggle="modal" data-target="#columnManagement">
+            Change columns in view
+          </button>
+      </div>
+      <h1>{{ data.view.name }}</h1>
       {% include 'table.html' %}
     </div>
   </div>

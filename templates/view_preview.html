@@ -1,0 +1,14 @@
+<div class="col-12 col-xs-12 col-md-3">
+  <div class='card'>
+      <div class="card-body">
+        <h5 class="card-title">{{ view.name }}</h5>
+        {% if view.topic %}
+            <h6 class="card-subtitle mb-2 text-muted">{{ view.topic }}</h6>
+        {% endif %}
+        {% if view.description %}
+            <p class="card-text">{{ view.description }}</p>
+        {% endif %}
+        <a href="/views/{{ viewname }}" class="card-link btn btn-light">Show</a>
+      </div>
+</div>
+</div>

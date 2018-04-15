@@ -2,8 +2,9 @@ import shepherd
 
 
 def create_view(viewname, view_template):
-    if viewname == 'new':
-        return False, "\"New\" is an illegal view name. Please enter a different name for the new view."
+    if viewname in ['new', 'overview']:
+        return False, ("\"{}\" is an illegal view name. "
+            "Please enter a different name for the new view.".format(viewname))
     shepherd.CONFIG.configuration['views'][viewname] = view_template.copy()
     shepherd.CONFIG.configuration['views_order'].append(viewname)
     shepherd.CONFIG.save_config()

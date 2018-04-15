@@ -8,16 +8,26 @@ import shepherd
 # ============================================================================ #
 CONFIG_FILE = ".spconfig"
 VIEW_TEMPLATE = {
+    'name': "",
+    'topic': "",
+    'description': "",
     'train_columns': [('name', True), ('dataset', True)],
     'eval_columns': [],
 }
 CONFIG_TEMPLATE = {
     'model_home': './data',
+    'show_welcome': True,
     'views_order': ['overview'],
     'views': {
-        'overview': VIEW_TEMPLATE.copy()
+        'overview': {
+            'name': "Overview",
+            'topic': "",
+            'description': "Show all models known to Shepherd.",
+            'train_columns': [('name', True), ('dataset', True)],
+            'eval_columns': [],
+        }
     },
-    'view_template': VIEW_TEMPLATE.copy()
+    'view_template': VIEW_TEMPLATE.copy(),
 }
 
 class Configuration:
@@ -44,7 +54,6 @@ class Configuration:
         return self.configuration
 
     def get(self, key):
-        print(self.configuration)
         return self.configuration[key]
 
     def set(self, key, value):
@@ -53,7 +62,7 @@ class Configuration:
     def get_headers(self):
         # Update self.headers with menu links
         view_names = sorted(list(self.configuration['views'].keys()))
-        self.headers['views'] = view_names
+        self.headers['view_names'] = view_names
         self.headers['views_order'] = self.configuration['views_order']
         return self.headers.copy()
 

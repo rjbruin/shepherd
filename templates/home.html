@@ -1,0 +1,27 @@
+{% include 'header.html' %}
+<div class='container' id='content'>
+  <div class='row'>
+    <div class='col-12 col-xs-12'>
+      {% if data.show_welcome %}
+      <div class="jumbotron">
+          <h1 class="display-4">Welcome to Shepherd!</h1>
+          <p class="lead">Shepherd manages your Deep Learning models so you don't have to.</p>
+          <hr class="my-4">
+          <p>If you feel like you could use an introduction you can read the short tutorial to get a sense for the most important concepts.</p>
+          <a class="btn btn-primary" href="#" role="button">Go to tutorial</a>
+          <a class="btn btn-secondary" href="#" role="button">Don't show this again</a>
+        </div>
+      {% endif %}
+      <h1>Views</h1>
+      <div class='container' id='content'>
+        <div class='row'>
+          {% for viewname in data.views %}
+            {% set view = data.views[viewname] %}
+            {% include 'view_preview.html' %}
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% include 'footer.html' %}

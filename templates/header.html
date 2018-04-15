@@ -14,6 +14,9 @@
 
       <div class="collapse navbar-collapse" id="navbarSupportedContent">
         <ul class="navbar-nav mr-auto">
+          <li class="nav-item {% if data.active_page == 'home' %}active{% endif %}">
+            <a class="nav-link" href="/">Home</a>
+          </li>
           {% for viewname in data.views_order %}
             <li class="nav-item {% if data.active_page == viewname %}active{% endif %}">
               <a class="nav-link" href="/views/{{ viewname }}">{{ viewname|capitalize }}</a>
