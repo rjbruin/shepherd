@@ -6,8 +6,8 @@ import json
 app = Flask(__name__)
 app.secret_key = 'Marte Fleur is lief!'
 
-import app_logic.api as api
-import app_logic.config as config
+import application.api as api
+import application.config as config
 
 CONFIG = config.Configuration()
 print(CONFIG.configuration)
