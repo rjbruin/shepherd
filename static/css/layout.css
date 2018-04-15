@@ -7,3 +7,9 @@
 .table thead th.view-eval-head {
     background-color: #d8dbde;
 }
+
+footer {
+    background: #e9ecef;
+    margin-top: 8em;
+    padding: 4em;
+}

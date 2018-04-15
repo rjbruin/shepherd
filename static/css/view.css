@@ -1,3 +1,6 @@
 table.shepherd-view [data-state="0"] {
     display: none;
 }
+.view-preview {
+    height: 14em;
+}

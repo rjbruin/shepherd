@@ -115,7 +115,7 @@ def home_route():
     data = {
         'views': CONFIG.get('views'),
         'active_page': 'home',
-        'show_welcome': CONFIG.get('show_welcome')
+        'show_welcome': CONFIG.get('show_welcome'),
     }
     data.update(CONFIG.get_headers())
     return render_template('home.html', data=data)

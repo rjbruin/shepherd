@@ -22,9 +22,6 @@
               <a class="nav-link" href="/views/{{ viewname }}">{{ viewname|capitalize }}</a>
             </li>
           {% endfor %}
-          <li class="nav-item {% if data.active_page == 'create_view' %}active{% endif %}">
-            <a class="nav-link" href="/views/new">Create new view</a>
-          </li>
           <li class="nav-item {% if data.active_page == 'settings' %}active{% endif %}">
             <a class="nav-link" href="/settings">Settings</a>
           </li>
